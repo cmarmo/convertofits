@@ -153,7 +153,7 @@ for arg in sys.argv:
           if ((rbytes != 0) and (lastlabrec != 0)):
             myskip = rbytes * lastlabrec
           myfile.seek(myskip)
-          dim = (1,mysamples,mylines)
+          dim = (1,mylines,mysamples)
           longIR1 = np.zeros(dim,dtype=np.int32)
           latIR1 = np.zeros(dim,dtype=np.int32)
           incIR1 = np.zeros((mylines,mysamples),dtype=np.int32)
@@ -175,9 +175,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(6*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longIR1[0,:,y]=unpack_from(form, contents)
+            longIR1[0,y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latIR1[0,:,y]=unpack_from(form, contents)
+            latIR1[0,y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incIR1[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -187,9 +187,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longIR2[0,:,y]=unpack_from(form, contents)
+            longIR2[0,y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latIR2[0,:,y]=unpack_from(form, contents)
+            latIR2[0,y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incIR2[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -199,9 +199,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longV[0,:,y]=unpack_from(form, contents)
+            longV[0,y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latV[0,:,y]=unpack_from(form, contents)
+            latV[0,y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incV[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -271,16 +271,72 @@ for arg in sys.argv:
         # SWIR-L channel #
         hduIR2 = fits.PrimaryHDU(bsqIR2)
         tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlongIR2), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlatIR2)])
-        listIR2 = fits.HDUList([hduIR2,tbhduIR2])
+        hduincIR2 = fits.ImageHDU(newincIR2)
+        hduemIR2 = fits.ImageHDU(newemIR2)
+        hdupaIR2 = fits.ImageHDU(newpaIR2)
+        listIR2 = fits.HDUList([hduIR2,tbhduIR2,hduincIR2,hduemIR2,hdupaIR2])
         IR2hdr = listIR2[0].header
-        hduIR2.writeto(myfitsIR2)
+        IR2hdr.set('ctype1', 'RA---TAB')
+        IR2hdr.set('ctype2', 'DEC--TAB')
+        IR2hdr.set('CRPIX1', 1.0)
+        IR2hdr.set('CRPIX2', 1.0)
+        IR2hdr.set('CRVAL1', 1.0)
+        IR2hdr.set('CRVAL2', 1.0)
+        IR2hdr.set('CD1_1', 1.0)
+        IR2hdr.set('CD2_2', 1.0)
+        IR2hdr.set('CD1_2', 0.0)
+        IR2hdr.set('CD2_1', 0.0)
+        IR2hdr.set('PS1_0 ', 'WCS-TAB ')
+        IR2hdr.set('PS1_1 ', 'COORDS1 ')
+        IR2hdr.set('PS2_0 ', 'WCS-TAB ')
+        IR2hdr.set('PS2_1 ', 'COORDS2 ')
+        IR2hdr.set('PV1_3 ', 1.0)
+        IR2hdr.set('PV2_3 ', 2.0)
+
+        IR2thdr = listIR2[1].header
+        IR2thdr.set('extname', 'WCS-TAB')
+        IR2ihdr = listIR2[2].header
+        IR2ihdr.set('extname', 'INCIDENCE')
+        IR2ehdr = listIR2[3].header
+        IR2ehdr.set('extname', 'EMISSION')
+        IR2pahdr = listIR2[4].header
+        IR2pahdr.set('extname', 'PHASE-ANGLE')
+        listIR2.writeto(myfitsIR2)
 
         # VNIR channel #
         hduV = fits.PrimaryHDU(bsqV)
         tbhduV = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlongV), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlatV)])
-        listV = fits.HDUList([hduV,tbhduV])
+        hduincV = fits.ImageHDU(newincV)
+        hduemV = fits.ImageHDU(newemV)
+        hdupaV = fits.ImageHDU(newpaV)
+        listV = fits.HDUList([hduV,tbhduV,hduincV,hduemV,hdupaV])
         Vhdr = listV[0].header
-        hduV.writeto(myfitsV)
+        Vhdr.set('ctype1', 'RA---TAB')
+        Vhdr.set('ctype2', 'DEC--TAB')
+        Vhdr.set('CRPIX1', 1.0)
+        Vhdr.set('CRPIX2', 1.0)
+        Vhdr.set('CRVAL1', 1.0)
+        Vhdr.set('CRVAL2', 1.0)
+        Vhdr.set('CD1_1', 1.0)
+        Vhdr.set('CD2_2', 1.0)
+        Vhdr.set('CD1_2', 0.0)
+        Vhdr.set('CD2_1', 0.0)
+        Vhdr.set('PS1_0 ', 'WCS-TAB ')
+        Vhdr.set('PS1_1 ', 'COORDS1 ')
+        Vhdr.set('PS2_0 ', 'WCS-TAB ')
+        Vhdr.set('PS2_1 ', 'COORDS2 ')
+        Vhdr.set('PV1_3 ', 1.0)
+        Vhdr.set('PV2_3 ', 2.0)
+
+        Vthdr = listV[1].header
+        Vthdr.set('extname', 'WCS-TAB')
+        Vihdr = listV[2].header
+        Vihdr.set('extname', 'INCIDENCE')
+        Vehdr = listV[3].header
+        Vehdr.set('extname', 'EMISSION')
+        Vpahdr = listV[4].header
+        Vpahdr.set('extname', 'PHASE-ANGLE')
+        listV.writeto(myfitsV)
 
       else:
         print 'Cannot find image %s!\n' %(myimage)
