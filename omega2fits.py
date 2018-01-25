@@ -153,7 +153,7 @@ for arg in sys.argv:
           if ((rbytes != 0) and (lastlabrec != 0)):
             myskip = rbytes * lastlabrec
           myfile.seek(myskip)
-          dim = (1,mylines,mysamples)
+          dim = (mylines,mysamples)
           longIR1 = np.zeros(dim,dtype=np.int32)
           latIR1 = np.zeros(dim,dtype=np.int32)
           incIR1 = np.zeros((mylines,mysamples),dtype=np.int32)
@@ -175,9 +175,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(6*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longIR1[0,y,:]=unpack_from(form, contents)
+            longIR1[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latIR1[0,y,:]=unpack_from(form, contents)
+            latIR1[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incIR1[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -187,9 +187,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longIR2[0,y,:]=unpack_from(form, contents)
+            longIR2[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latIR2[0,y,:]=unpack_from(form, contents)
+            latIR2[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incIR2[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -199,9 +199,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longV[0,y,:]=unpack_from(form, contents)
+            longV[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latV[0,y,:]=unpack_from(form, contents)
+            latV[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incV[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -231,11 +231,11 @@ for arg in sys.argv:
           continue
 
         ### Writing FITS files ###
-        tdim = '(1,' + str(mysamples) + ',' + str(mylines)+ ')'
+        tdim = '(' + str(mysamples) + ',' + str(mylines)+ ')'
 
         # SWIR-C channel #
         hduIR1 = fits.PrimaryHDU(bsqIR1)
-        tbhduIR1 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mylines*mysamples)+'D', array=newlongIR1), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mylines*mysamples)+'D', array=newlatIR1)])
+        tbhduIR1 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mylines*mysamples)+'D', array=[newlongIR1]), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mylines*mysamples)+'D', array=[newlatIR1])])
         hduincIR1 = fits.ImageHDU(newincIR1)
         hduemIR1 = fits.ImageHDU(newemIR1)
         hdupaIR1 = fits.ImageHDU(newpaIR1)
@@ -270,7 +270,7 @@ for arg in sys.argv:
 
         # SWIR-L channel #
         hduIR2 = fits.PrimaryHDU(bsqIR2)
-        tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlongIR2), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlatIR2)])
+        tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlongIR2]), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlatIR2])])
         hduincIR2 = fits.ImageHDU(newincIR2)
         hduemIR2 = fits.ImageHDU(newemIR2)
         hdupaIR2 = fits.ImageHDU(newpaIR2)
@@ -305,7 +305,7 @@ for arg in sys.argv:
 
         # VNIR channel #
         hduV = fits.PrimaryHDU(bsqV)
-        tbhduV = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlongV), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=newlatV)])
+        tbhduV = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlongV]), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlatV])])
         hduincV = fits.ImageHDU(newincV)
         hduemV = fits.ImageHDU(newemV)
         hdupaV = fits.ImageHDU(newpaV)
