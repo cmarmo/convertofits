@@ -118,7 +118,7 @@ for arg in sys.argv:
         hdunew.writeto(myout)
         hdu.close()
       else:
-        print 'Cannot find image %s!\n' %(myimage)
+        print('Cannot find image {0:s}!\n'.format(myimage))
         exit(1)
   i = i+1
 
