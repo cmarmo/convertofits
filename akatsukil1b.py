@@ -40,19 +40,6 @@ for arg in sys.argv:
         trpx = dim1 + 0.5
         trpy = dim2 + 0.5
 
-        modxy = (trpx - blpx)*(trpx - blpx) + (trpy - blpy)*(trpy - blpy)
-        sinxy = (trpy - blpy) / math.sqrt(modxy)
-
-        # from spherical right-angle triangles
-        cosc = math.cos(degtorad*(trra-brra)) * math.cos(degtorad*(trdec-brdec))
-        cosa = math.cos(degtorad*(trra-blra)) * math.cos(degtorad*(trdec-bldec))
-        cosb = math.cos(degtorad*(brra-blra)) * math.cos(degtorad*(brdec-bldec))
-        sina = math.sin(math.acos(cosa))
-        sinb = math.sin(math.acos(cosb))
-        cosad = (cosc - cosa * cosb) / (sina*sinb)
-        
-        theta = math.asin(sinxy) - math.acos(cosad)
-
         if os.path.exists(mylabel):
           label = open(mylabel,'r')
           for line in label:
@@ -68,6 +55,25 @@ for arg in sys.argv:
             if (temp[0].strip(' ') == "VERTICAL_PIXEL_FOV"):
               vfovrads = (temp[1].strip(' ')).split(' ')
               vfovrad = float(vfovrads[0])
+
+          # from spherical right-angle triangles
+
+          coscp = math.cos(hfovrad*degtorad*(trpx-brpx)) * math.cos(vfovrad*degtorad*(trpy-brpy))
+          cosap = math.cos(hfovrad*degtorad*(trpx-blpx)) * math.cos(vfovrad*degtorad*(trpy-blpy))
+          cosbp = math.cos(hfovrad*degtorad*(brpx-blpx)) * math.cos(vfovrad*degtorad*(brpy-blpy))
+          sinap = math.sin(math.acos(cosap))
+          sinbp = math.sin(math.acos(cosbp))
+          cosxy = (coscp - cosap * cosbp) / (sinap*sinbp)
+
+          cosc = math.cos(degtorad*(trra-brra)) * math.cos(degtorad*(trdec-brdec))
+          cosa = math.cos(degtorad*(trra-blra)) * math.cos(degtorad*(trdec-bldec))
+          cosb = math.cos(degtorad*(brra-blra)) * math.cos(degtorad*(brdec-bldec))
+          sina = math.sin(math.acos(cosa))
+          sinb = math.sin(math.acos(cosb))
+          cosad = (cosc - cosa * cosb) / (sina*sinb)
+
+          theta = math.acos(cosxy) - math.acos(cosad)
+
 
           cdelt1 = hfovrad * radtodeg # from horizontal pixel field of view in the label (in degrees)
           cdelt2 = vfovrad * radtodeg # from vertical pixel field of view in the label (in degrees)
@@ -86,7 +92,7 @@ for arg in sys.argv:
             pc22 = -pc22
                                         # images are rotated CCW 270 deg 
           hdunew = fits.PrimaryHDU(hdu[1].data)
-          hdtuple = (repr(hdr[7:])).split('\n')
+          hdunew.header += hdr
           hdunew.header['CDELT1'] = cdelt1
           hdunew.header['CDELT2'] = cdelt2
           hdunew.header['PC1_1'] = pc11
