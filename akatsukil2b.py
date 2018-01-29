@@ -1,7 +1,7 @@
 #!/usr/bin/env python 
 
 import sys,os,re, math
-#import numpy as np
+import numpy as np
 from astropy.io import fits
 
 i = 0
@@ -118,24 +118,24 @@ for arg in sys.argv:
         if os.path.exists(mygeom):
           hdgeom = fits.open(mygeom)
           ## Sparse description of coordinates
-          hdr['CRVAL1a'] = 1.0
-          hdr['CRVAL2a'] = 1.0
-          hdr['CRPIX1a'] = 0.5
-          hdr['CRPIX2a'] = 0.5
-          hdr['CTYPE1a'] = 'VELN-TAB'
-          hdr['CTYPE2a'] = 'VELT-TAB'
-          hdr['CD1_1a'] = 0.5
-          hdr['CD1_2a'] = 0.0
-          hdr['CD2_1a'] = 0.0
-          hdr['CD2_2a'] = 0.5
-          hdr['PS1_0a '] = 'WCS-TAB '
-          hdr['PS1_1a '] = 'COORDS1 '
-          hdr['PS1_2a '] = 'INDEX   '
-          hdr['PS2_0a '] = 'WCS-TAB '
-          hdr['PS2_1a '] = 'COORDS2 '
-          hdr['PS2_2a '] = 'INDEX  '
-          hdr['PV1_3a '] = 1.0
-          hdr['PV2_3a '] = 2.0
+          #hdr['CRVAL1a'] = 1.0
+          #hdr['CRVAL2a'] = 1.0
+          #hdr['CRPIX1a'] = 0.5
+          #hdr['CRPIX2a'] = 0.5
+          #hdr['CTYPE1a'] = 'VELN-TAB'
+          #hdr['CTYPE2a'] = 'VELT-TAB'
+          #hdr['CD1_1a'] = 0.5
+          #hdr['CD1_2a'] = 0.0
+          #hdr['CD2_1a'] = 0.0
+          #hdr['CD2_2a'] = 0.5
+          #hdr['PS1_0a '] = 'WCS-TAB '
+          #hdr['PS1_1a '] = 'COORDS1 '
+          #hdr['PS1_2a '] = 'INDEX   '
+          #hdr['PS2_0a '] = 'WCS-TAB '
+          #hdr['PS2_1a '] = 'COORDS2 '
+          #hdr['PS2_2a '] = 'INDEX  '
+          #hdr['PV1_3a '] = 1.0
+          #hdr['PV2_3a '] = 2.0
           ## sparse description of local time
           hdr['CRVAL1b'] = 1.0
           hdr['CRPIX1b'] = 0.5
@@ -153,14 +153,15 @@ for arg in sys.argv:
           ea = hdgeom['Emission angle'].data
           aa = hdgeom['Azimuthal angle'].data
           [m,n] = lon.shape
-          newlong = []
-          newlat = []
-          newlt = []
-          newpa = []
-          newia = []
-          newea = []
-          newaa = []
+          newlong = np.array([], dtype=np.object)
+          newlat = np.array([], dtype=np.object)
+          newlt = np.array([], dtype=np.object)
+          #newpa = np.array([])
+          #newia = np.array([])
+          #newea = np.array([])
+          #newaa = np.array([])
           index = []
+          indtemp = 0
           if os.path.exists(mygeom):
             hdgeom4 = fits.open(mygeom4)
             LLlon = hdgeom4['LL Longitude'].data
@@ -175,38 +176,56 @@ for arg in sys.argv:
             dimmax = (m+m4) * (n+n4)
             ind = 0
             for j in range(0,n4-1,2):
+              tlong = np.array([], dtype=np.object)
+              tlat = np.array([], dtype=np.object)
+              tlt = np.array([], dtype=np.object)
+              tindex = np.array([], dtype=np.object)
               for i in range(0,m4-1):
                 if (not math.isnan(LLlon[i,j]) and not math.isnan(LLlat[i,j])):
-                  newlong.append(LLlon[i,j])
-                  newlat.append(LLlat[i,j])
-                  newlt.append(LLlt[i,j])
-                  newpa.append(LLpa[i,j])
-                  newia.append(LLia[i,j])
-                  newea.append(LLea[i,j])
-                  newaa.append(LLaa[i,j])
-                  index.append(ind)
+                  tlong = np.append(tlong,LLlon[i,j])
+                  tlat = np.append(tlat,LLlat[i,j])
+                  tlt = np.append(tlt,LLlt[i,j])
+                  #newpa = np.append(newpa,LLpa[i,j])
+                  #newia = np.append(newia,LLia[i,j])
+                  #newea = np.append(newea,LLea[i,j])
+                  #newaa = np.append(newaa,LLaa[i,j])
+                  tindex = np.append(tindex,ind)
+                  indtemp += 1
                 ind += 2
+              newlong = np.append(newlong,tlong,axis=0)
+              newlat = np.append(newlat,tlat,axis=0)
+              newlt = np.append(newlt,tlt,axis=0)
+              index = np.append(index,tindex,axis=0)              
+              tlong = np.array([], dtype=np.object)
+              tlat = np.array([], dtype=np.object)
+              tlt = np.array([], dtype=np.object)
+              tindex = np.array([], dtype=np.object)
               for i in range(0,m-1):
                 if (not math.isnan(lon[i,j]) and not math.isnan(lat[i,j])):
-                  newlong.append(lon[i,j])
-                  newlat.append(lat[i,j])
-                  newlt.append(lt[i,j])
-                  newpa.append(pa[i,j])
-                  newia.append(ia[i,j])
-                  newea.append(ea[i,j])
-                  newaa.append(aa[i,j])
-                  index.append(ind)
+                  tlong = np.append(tlong,LLlon[i,j])
+                  tlat = np.append(tlat,LLlat[i,j])
+                  tlt = np.append(tlt,LLlt[i,j])
+                  #newpa = np.append(newpa,pa[i,j])
+                  #newia = np.append(newia,ia[i,j])
+                  #newea = np.append(newea,ea[i,j])
+                  #newaa = np.append(newaa,aa[i,j])
+                  tindex = np.append(tindex,ind)
+                  indtemp += 1
                 ind += 2 
+              newlong = np.append(newlong,tlong,axis=0)
+              newlat = np.append(newlat,tlat,axis=0)
+              newlt = np.append(newlt,tlt,axis=0)
+              index = np.append(index,tindex,axis=0)              
 
           else:
             print('Cannot find geom file {0:s}!\n'.format(mygeom4))
 
           hdgeom.close()
-          indtemp = len(index)
-          coords1 = fits.Column(name='COORDS1', unit='deg', format=str(indtemp)+'D', array=[newlong])
-          coords2 = fits.Column(name='COORDS2', unit='deg', format=str(indtemp)+'D', array=[newlat])
-          loctime = fits.Column(name='LOCTIME', unit='h', format=str(indtemp)+'D', array=[newlt])
-          indcol  = fits.Column(name='INDEX', format=str(indtemp)+'I', array=[index])
+
+          coords1 = fits.Column(name='COORDS1', unit='deg', format='PI()', array=np.array([newlong], dtype=np.object))
+          coords2 = fits.Column(name='COORDS2', unit='deg', format='PI()', array=np.array([newlat], dtype=np.object))
+          loctime = fits.Column(name='LOCTIME', unit='h', format='PI()', array=np.array([newlt], dtype=np.object))
+          indcol  = fits.Column(name='INDEX', format='PI()', array=np.array([index], dtype=np.object))
           tbhdu = fits.BinTableHDU.from_columns([coords1,coords2,loctime,indcol])
           tbhdu.header.set('extname', 'WCS-TAB')
         else:
