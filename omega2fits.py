@@ -153,19 +153,16 @@ for arg in sys.argv:
           if ((rbytes != 0) and (lastlabrec != 0)):
             myskip = rbytes * lastlabrec
           myfile.seek(myskip)
-          dim = (mylines,mysamples)
-          longIR1 = np.zeros(dim,dtype=np.int32)
-          latIR1 = np.zeros(dim,dtype=np.int32)
+          dim = (mylines,mysamples,2)
+          coordsIR1 = np.zeros(dim,dtype=np.int32)
           incIR1 = np.zeros((mylines,mysamples),dtype=np.int32)
           emIR1 = np.zeros((mylines,mysamples),dtype=np.int32)
           paIR1 = np.zeros((mylines,mysamples),dtype=np.int32)
-          longIR2 = np.zeros(dim,dtype=np.int32)
-          latIR2 = np.zeros(dim,dtype=np.int32)
+          coordsIR2 = np.zeros(dim,dtype=np.int32)
           incIR2 = np.zeros((mylines,mysamples),dtype=np.int32)
           emIR2 = np.zeros((mylines,mysamples),dtype=np.int32)
           paIR2 = np.zeros((mylines,mysamples),dtype=np.int32)
-          longV = np.zeros(dim,dtype=np.int32)
-          latV = np.zeros(dim,dtype=np.int32)
+          coordsV = np.zeros(dim,dtype=np.int32)
           incV = np.zeros((mylines,mysamples),dtype=np.int32)
           emV = np.zeros((mylines,mysamples),dtype=np.int32)
           paV = np.zeros((mylines,mysamples),dtype=np.int32)
@@ -175,9 +172,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(6*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longIR1[y,:]=unpack_from(form, contents)
+            coordsIR1[y,:,0]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latIR1[y,:]=unpack_from(form, contents)
+            coordsIR1[y,:,1]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incIR1[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -187,9 +184,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longIR2[y,:]=unpack_from(form, contents)
+            coordsIR2[y,:,0]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latIR2[y,:]=unpack_from(form, contents)
+            coordsIR2[y,:,1]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incIR2[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -199,9 +196,9 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
             contents=myfile.read(bytex)
-            longV[y,:]=unpack_from(form, contents)
+            coordsV[y,:,0]=unpack_from(form, contents)
             contents=myfile.read(bytex)
-            latV[y,:]=unpack_from(form, contents)
+            coordsV[y,:,1]=unpack_from(form, contents)
             contents=myfile.read(bytex)
             incV[y,:]=unpack_from(form, contents)
             contents=myfile.read(bytex)
@@ -211,18 +208,15 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
           factor = 0.0001
-          newlongIR1 = factor * longIR1
-          newlatIR1 = factor * latIR1
+          newcoordsIR1 = factor * coordsIR1
           newincIR1 = factor * incIR1
           newemIR1 = factor * emIR1
           newpaIR1 = factor * paIR1
-          newlongIR2 = factor * longIR2
-          newlatIR2 = factor * latIR2
+          newcoordsIR2 = factor * coordsIR2
           newincIR2 = factor * incIR2
           newemIR2 = factor * emIR2
           newpaIR2 = factor * paIR2
-          newlongV = factor * longV
-          newlatV = factor * latV
+          newcoordsV = factor * coordsV
           newincV = factor * incV
           newemV = factor * emV
           newpaV = factor * paV
@@ -231,18 +225,22 @@ for arg in sys.argv:
           continue
 
         ### Writing FITS files ###
-        tdim = '(' + str(mysamples) + ',' + str(mylines)+ ')'
+        form = str(2*mysamples*mylines)
+        ttype = "COORDS"
+        tform= form+'D';
+        tunit = 'deg';
+        tdim = '(2,' + str(mysamples) + ',' + str(mylines) + ')'
 
         # SWIR-C channel #
         hduIR1 = fits.PrimaryHDU(bsqIR1)
-        tbhduIR1 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mylines*mysamples)+'D', array=[newlongIR1]), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mylines*mysamples)+'D', array=[newlatIR1])])
+        tbhduIR1 = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[newcoordsIR1])])
         hduincIR1 = fits.ImageHDU(newincIR1)
         hduemIR1 = fits.ImageHDU(newemIR1)
         hdupaIR1 = fits.ImageHDU(newpaIR1)
         listIR1 = fits.HDUList([hduIR1,tbhduIR1,hduincIR1,hduemIR1,hdupaIR1])
         IR1hdr = listIR1[0].header
-        IR1hdr.set('ctype1', 'RA---TAB')
-        IR1hdr.set('ctype2', 'DEC--TAB')
+        IR1hdr.set('ctype1', 'MALN-TAB')
+        IR1hdr.set('ctype2', 'MALT-TAB')
         IR1hdr.set('CRPIX1', 1.0)
         IR1hdr.set('CRPIX2', 1.0)
         IR1hdr.set('CRVAL1', 1.0)
@@ -251,12 +249,22 @@ for arg in sys.argv:
         IR1hdr.set('CD2_2', 1.0)
         IR1hdr.set('CD1_2', 0.0)
         IR1hdr.set('CD2_1', 0.0)
+        IR1hdr.set('PC1_1', 1.0)
+        IR1hdr.set('PC2_2', 1.0)
+        IR1hdr.set('PC1_2', 0.0)
+        IR1hdr.set('PC2_1', 0.0)
+        IR1hdr.set('CDELT1', 1.0)
+        IR1hdr.set('CDELT2', 1.0)
         IR1hdr.set('PS1_0 ', 'WCS-TAB ')
-        IR1hdr.set('PS1_1 ', 'COORDS1 ')
+        IR1hdr.set('PS1_1 ', 'COORDS ')
         IR1hdr.set('PS2_0 ', 'WCS-TAB ')
-        IR1hdr.set('PS2_1 ', 'COORDS2 ')
-        IR1hdr.set('PV1_3 ', 1.0)
-        IR1hdr.set('PV2_3 ', 2.0)
+        IR1hdr.set('PS2_1 ', 'COORDS ')
+        IR1hdr.set('PV1_1 ', 1)
+        IR1hdr.set('PV2_1 ', 1)
+        IR1hdr.set('PV1_2 ', 1)
+        IR1hdr.set('PV2_2 ', 1)
+        IR1hdr.set('PV1_3 ', 1)
+        IR1hdr.set('PV2_3 ', 2)
 
         IR1thdr = listIR1[1].header
         IR1thdr.set('extname', 'WCS-TAB')
@@ -270,14 +278,14 @@ for arg in sys.argv:
 
         # SWIR-L channel #
         hduIR2 = fits.PrimaryHDU(bsqIR2)
-        tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlongIR2]), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlatIR2])])
+        tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[newcoordsIR2])])
         hduincIR2 = fits.ImageHDU(newincIR2)
         hduemIR2 = fits.ImageHDU(newemIR2)
         hdupaIR2 = fits.ImageHDU(newpaIR2)
         listIR2 = fits.HDUList([hduIR2,tbhduIR2,hduincIR2,hduemIR2,hdupaIR2])
         IR2hdr = listIR2[0].header
-        IR2hdr.set('ctype1', 'RA---TAB')
-        IR2hdr.set('ctype2', 'DEC--TAB')
+        IR2hdr.set('ctype1', 'MALN-TAB')
+        IR2hdr.set('ctype2', 'MALT-TAB')
         IR2hdr.set('CRPIX1', 1.0)
         IR2hdr.set('CRPIX2', 1.0)
         IR2hdr.set('CRVAL1', 1.0)
@@ -286,12 +294,22 @@ for arg in sys.argv:
         IR2hdr.set('CD2_2', 1.0)
         IR2hdr.set('CD1_2', 0.0)
         IR2hdr.set('CD2_1', 0.0)
+        IR2hdr.set('PC1_1', 1.0)
+        IR2hdr.set('PC2_2', 1.0)
+        IR2hdr.set('PC1_2', 0.0)
+        IR2hdr.set('PC2_1', 0.0)
+        IR2hdr.set('CDELT1', 1.0)
+        IR2hdr.set('CDELT2', 1.0)
         IR2hdr.set('PS1_0 ', 'WCS-TAB ')
-        IR2hdr.set('PS1_1 ', 'COORDS1 ')
+        IR2hdr.set('PS1_1 ', 'COORDS ')
         IR2hdr.set('PS2_0 ', 'WCS-TAB ')
-        IR2hdr.set('PS2_1 ', 'COORDS2 ')
-        IR2hdr.set('PV1_3 ', 1.0)
-        IR2hdr.set('PV2_3 ', 2.0)
+        IR2hdr.set('PS2_1 ', 'COORDS ')
+        IR2hdr.set('PV1_1 ', 1)
+        IR2hdr.set('PV2_1 ', 1)
+        IR2hdr.set('PV1_2 ', 1)
+        IR2hdr.set('PV2_2 ', 1)
+        IR2hdr.set('PV1_3 ', 1)
+        IR2hdr.set('PV2_3 ', 2)
 
         IR2thdr = listIR2[1].header
         IR2thdr.set('extname', 'WCS-TAB')
@@ -305,14 +323,14 @@ for arg in sys.argv:
 
         # VNIR channel #
         hduV = fits.PrimaryHDU(bsqV)
-        tbhduV = fits.BinTableHDU.from_columns([fits.Column(name='COORDS1', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlongV]), fits.Column(name='COORDS2', unit='deg', dim=tdim, format=str(mysamples*mylines)+'D', array=[newlatV])])
+        tbhduV = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[newcoordsV])])
         hduincV = fits.ImageHDU(newincV)
         hduemV = fits.ImageHDU(newemV)
         hdupaV = fits.ImageHDU(newpaV)
         listV = fits.HDUList([hduV,tbhduV,hduincV,hduemV,hdupaV])
         Vhdr = listV[0].header
-        Vhdr.set('ctype1', 'RA---TAB')
-        Vhdr.set('ctype2', 'DEC--TAB')
+        Vhdr.set('ctype1', 'MALN-TAB')
+        Vhdr.set('ctype2', 'MALT-TAB')
         Vhdr.set('CRPIX1', 1.0)
         Vhdr.set('CRPIX2', 1.0)
         Vhdr.set('CRVAL1', 1.0)
@@ -321,12 +339,22 @@ for arg in sys.argv:
         Vhdr.set('CD2_2', 1.0)
         Vhdr.set('CD1_2', 0.0)
         Vhdr.set('CD2_1', 0.0)
+        Vhdr.set('PC1_1', 1.0)
+        Vhdr.set('PC2_2', 1.0)
+        Vhdr.set('PC1_2', 0.0)
+        Vhdr.set('PC2_1', 0.0)
+        Vhdr.set('CDELT1', 1.0)
+        Vhdr.set('CDELT2', 1.0)
         Vhdr.set('PS1_0 ', 'WCS-TAB ')
-        Vhdr.set('PS1_1 ', 'COORDS1 ')
+        Vhdr.set('PS1_1 ', 'COORDS ')
         Vhdr.set('PS2_0 ', 'WCS-TAB ')
-        Vhdr.set('PS2_1 ', 'COORDS2 ')
-        Vhdr.set('PV1_3 ', 1.0)
-        Vhdr.set('PV2_3 ', 2.0)
+        Vhdr.set('PS2_1 ', 'COORDS ')
+        Vhdr.set('PV1_1 ', 1)
+        Vhdr.set('PV2_1 ', 1)
+        Vhdr.set('PV1_2 ', 1)
+        Vhdr.set('PV2_2 ', 1)
+        Vhdr.set('PV1_3 ', 1)
+        Vhdr.set('PV2_3 ', 2)
 
         Vthdr = listV[1].header
         Vthdr.set('extname', 'WCS-TAB')
