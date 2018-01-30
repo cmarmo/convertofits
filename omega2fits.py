@@ -227,8 +227,8 @@ for arg in sys.argv:
         ### Writing FITS files ###
         form = str(2*mysamples*mylines)
         ttype = "COORDS"
-        tform= form+'D';
-        tunit = 'deg';
+        tform= form+'D'
+        tunit = 'deg'
         tdim = '(2,' + str(mysamples) + ',' + str(mylines) + ')'
 
         # SWIR-C channel #

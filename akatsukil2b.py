@@ -117,53 +117,59 @@ for arg in sys.argv:
 
         if os.path.exists(mygeom):
           hdgeom = fits.open(mygeom)
-          ## Sparse description of coordinates
-          #hdr['CRVAL1a'] = 1.0
-          #hdr['CRVAL2a'] = 1.0
-          #hdr['CRPIX1a'] = 0.5
-          #hdr['CRPIX2a'] = 0.5
-          #hdr['CTYPE1a'] = 'VELN-TAB'
-          #hdr['CTYPE2a'] = 'VELT-TAB'
-          #hdr['CD1_1a'] = 0.5
-          #hdr['CD1_2a'] = 0.0
-          #hdr['CD2_1a'] = 0.0
-          #hdr['CD2_2a'] = 0.5
-          #hdr['PS1_0a '] = 'WCS-TAB '
-          #hdr['PS1_1a '] = 'COORDS1 '
-          #hdr['PS1_2a '] = 'INDEX   '
-          #hdr['PS2_0a '] = 'WCS-TAB '
-          #hdr['PS2_1a '] = 'COORDS2 '
-          #hdr['PS2_2a '] = 'INDEX  '
-          #hdr['PV1_3a '] = 1.0
-          #hdr['PV2_3a '] = 2.0
-          ## sparse description of local time
-          hdr['CRVAL1b'] = 1.0
-          hdr['CRPIX1b'] = 0.5
-          hdr['CTYPE1b'] = 'VET--TAB'
-          hdr['CD1_1b'] = 0.5
-          hdr['PS1_0b '] = 'WCS-TAB '
-          hdr['PS1_1b '] = 'LOCTIME '
-          hdr['PS1_2b '] = 'INDEX   '
-          hdr['PV1_1b '] = 1.0
-          lon = hdgeom['Longitude'].data
-          lat = hdgeom['Latitude'].data
-          lt = hdgeom['Local time'].data
-          pa = hdgeom['Phase angle'].data
-          ia = hdgeom['Incidence angle'].data
-          ea = hdgeom['Emission angle'].data
-          aa = hdgeom['Azimuthal angle'].data
-          [m,n] = lon.shape
-          newlong = [[]]
-          newlat = [[]]
-          newlt = [[]]
-          #newpa = np.array([])
-          #newia = np.array([])
-          #newea = np.array([])
-          #newaa = np.array([])
-          index = [[]]
-          indtemp = 0
-          if os.path.exists(mygeom):
+          if os.path.exists(mygeom4):
             hdgeom4 = fits.open(mygeom4)
+
+            ## Sparse description of coordinates
+            hdr['CRVAL1a'] = 1.0
+            hdr['CRVAL2a'] = 1.0
+            hdr['CRPIX1a'] = 0.5
+            hdr['CRPIX2a'] = 0.5
+            hdr['CTYPE1a'] = 'VELN-TAB'
+            hdr['CTYPE2a'] = 'VELT-TAB'
+            hdr['CD1_1a'] = 0.5
+            hdr['CD1_2a'] = 0.0
+            hdr['CD2_1a'] = 0.0
+            hdr['CD2_2a'] = 0.5
+            hdr['PC1_1a'] = 0.5
+            hdr['PC1_2a'] = 0.0
+            hdr['PC2_1a'] = 0.0
+            hdr['PC2_2a'] = 0.5
+            hdr['CDELT1a'] = 0.5
+            hdr['CDELT2a'] = 0.5
+            hdr['PS1_0a '] = 'WCS-TAB '
+            hdr['PS1_1a '] = 'COORDS  '
+            hdr['PS1_2a '] = 'INDEXLN '
+            hdr['PS2_0a '] = 'WCS-TAB '
+            hdr['PS2_1a '] = 'COORDS  '
+            hdr['PS2_2a '] = 'INDEXLT '
+            hdr['PV1_1a '] = 1
+            hdr['PV2_1a '] = 1
+            hdr['PV1_2a '] = 1
+            hdr['PV2_2a '] = 1
+            hdr['PV1_3a '] = 1
+            hdr['PV2_3a '] = 2
+            ## sparse description of local time
+            #hdr['CRVAL1b'] = 1.0
+            #hdr['CRPIX1b'] = 0.5
+            #hdr['CTYPE1b'] = 'VET--TAB'
+            #hdr['CD1_1b'] = 0.5
+            #hdr['PS1_0b '] = 'WCS-TAB '
+            #hdr['PS1_1b '] = 'LOCTIME '
+            #hdr['PS1_2b '] = 'INDEX   '
+            #hdr['PV1_1b '] = 1.0
+            lon = hdgeom['Longitude'].data
+            lat = hdgeom['Latitude'].data
+            lt = hdgeom['Local time'].data
+            pa = hdgeom['Phase angle'].data
+            ia = hdgeom['Incidence angle'].data
+            ea = hdgeom['Emission angle'].data
+            aa = hdgeom['Azimuthal angle'].data
+            [m,n] = lon.shape
+            #newpa = np.array([])
+            #newia = np.array([])
+            #newea = np.array([])
+            #newaa = np.array([])
             LLlon = hdgeom4['LL Longitude'].data
             LLlat = hdgeom4['LL Latitude'].data
             LLlt = hdgeom4['LL Local time'].data
@@ -173,61 +179,70 @@ for arg in sys.argv:
             LLaa = hdgeom['Azimuthal angle'].data
             [m4,n4] = LLlon.shape
             hdgeom4.close()
-            dimmax = (m+m4) * (n+n4)
-            ind = 0
-            for j in range(0,n4-1,2):
-              tlong = []
-              tlat = []
-              tlt = []
-              tindex = []
-              for i in range(0,m4-1):
-                if (not math.isnan(LLlon[i,j]) and not math.isnan(LLlat[i,j])):
-                  tlong.append(LLlon[i,j])
-                  tlat.append(LLlat[i,j])
-                  tlt.append(LLlt[i,j])
+
+            # Building long index
+            indexln = np.zeros([m+m4])
+            for i in range(0,m4-1):
+              lntest = LLlon[:,i]
+              if len(lntest[~np.isnan(lntest)]):
+                indexln[2*i] = (2*i)+1
+            for i in range(0,m-1):
+              lntest = lon[:,i]
+              if len(lntest[~np.isnan(lntest)]):
+                indexln[(2*i)+1] = 2*(i+1)
+            newindexln = indexln[np.nonzero(indexln)]
+            xmax = len(newindexln)
+
+            # Building lat index
+            indexlt = np.zeros([n+n4])
+            for j in range(0,n4-1):
+              lttest = LLlat[j,:]
+              if len(lttest[~np.isnan(lttest)]):
+                indexlt[2*j] = (2*j)+1
+            for j in range(0,n-1):
+              lttest = lat[j,:]
+              if len(lttest[~np.isnan(lttest)]):
+                indexlt[(2*j)+1] = 2*(j+1)
+            newindexlt = indexlt[np.nonzero(indexlt)]
+            ymax = len(newindexlt)
+
+            # Building coordinate array
+            coordsarr = np.zeros([ymax,xmax,2])
+
+            for j in range(0,ymax):
+              for i in range(0,xmax):
+                  indj = newindexlt[j]
+                  indi = newindexln[i]
+                  if indj % 2 == 0:
+                      myj = int(indj / 2) - 1
+                      myi = int(indi / 2) - 1
+                      coordsarr[j,i,0] = lon[myj,myi]
+                      coordsarr[j,i,1] = lat[myj,myi]
+                  else:
+                      myj = int((indj - 1) / 2)
+                      myi = int((indi - 1) / 2)
+                      coordsarr[j,i,0] = LLlon[myj,myi]
+                      coordsarr[j,i,1] = LLlat[myj,myi]
+                  #tlt.append(LLlt[i,j])
                   #newpa = np.append(newpa,LLpa[i,j])
                   #newia = np.append(newia,LLia[i,j])
                   #newea = np.append(newea,LLea[i,j])
                   #newaa = np.append(newaa,LLaa[i,j])
-                  tindex.append(ind)
-                  indtemp += 1
-                ind += 2
-              newlong.append(tlong)
-              newlat.append(tlat)
-              newlt.append(tlt)
-              index.append(tindex)              
-              tlong = []
-              tlat = []
-              tlt = []
-              tindex = []
-              for i in range(0,m-1):
-                if (not math.isnan(lon[i,j]) and not math.isnan(lat[i,j])):
-                  tlong.append(LLlon[i,j])
-                  tlat.append(LLlat[i,j])
-                  tlt.append(LLlt[i,j])
-                  #newpa = np.append(newpa,pa[i,j])
-                  #newia = np.append(newia,ia[i,j])
-                  #newea = np.append(newea,ea[i,j])
-                  #newaa = np.append(newaa,aa[i,j])
-                  tindex.append(ind)
-                  indtemp += 1
-                ind += 2 
-              newlong.append(tlong)
-              newlat.append(tlat)
-              newlt.append(tlt)
-              index.append(tindex)              
 
           else:
             print('Cannot find geom file {0:s}!\n'.format(mygeom4))
 
           hdgeom.close()
 
-          print(len(newlong))
-          coords1 = fits.Column(name='COORDS1', unit='deg', format='PI()', array=newlong)
-          coords2 = fits.Column(name='COORDS2', unit='deg', format='PI()', array=newlat)
-          loctime = fits.Column(name='LOCTIME', unit='h', format='PI()', array=newlt)
-          indcol  = fits.Column(name='INDEX', format='PI()', array=index)
-          tbhdu = fits.BinTableHDU.from_columns([coords1,coords2,loctime,indcol])
+          ttype = ["COORDS", "LNINDEX", "LTINDEX"]
+          tform= [str(2*xmax*ymax)+'D', str(xmax)+'D', str(ymax)+'D']
+          tunit = ['deg','','']
+          tdim = '(2,' + str(xmax) + ',' + str(ymax) + ')'
+
+          coords = fits.Column(name=ttype[0], unit=tunit[0], format=tform[0], dim=tdim, array=[coordsarr])
+          indln  = fits.Column(name=ttype[1], format=tform[1], array=[newindexln])
+          indlt  = fits.Column(name=ttype[2], format=tform[2], array=[newindexlt])
+          tbhdu = fits.BinTableHDU.from_columns([coords,indln,indlt])
           tbhdu.header.set('extname', 'WCS-TAB')
         else:
           print('Cannot find geom file {0:s}!\n'.format(mygeom))
