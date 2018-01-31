@@ -92,25 +92,25 @@ for arg in sys.argv:
             pc12 = -pc12
             pc21 = pc21
             pc22 = -pc22 # images are rotated CCW 270 deg 
-          hdr['CDELT1'] = cdelt1
-          hdr['CDELT2'] = cdelt2
-          hdr['PC1_1'] = pc11
-          hdr['PC1_2'] = pc12
-          hdr['PC2_1'] = pc21
-          hdr['PC2_2'] = pc22
-          hdr['CD1_1'] = pc11 * cdelt1
-          hdr['CD1_2'] = pc12 * cdelt1
-          hdr['CD2_1'] = pc21 * cdelt2
-          hdr['CD2_2'] = pc22 * cdelt2
+          #hdr['CDELT1'] = cdelt1
+          #hdr['CDELT2'] = cdelt2
+          #hdr['PC1_1'] = pc11
+          #hdr['PC1_2'] = pc12
+          #hdr['PC2_1'] = pc21
+          #hdr['PC2_2'] = pc22
+          #hdr['CD1_1'] = pc11 * cdelt1
+          #hdr['CD1_2'] = pc12 * cdelt1
+          #hdr['CD2_1'] = pc21 * cdelt2
+          #hdr['CD2_2'] = pc22 * cdelt2
         else:
           print('WARNING!! Cannot find label {0:s}!\n'.format(mylabel))
 
-        hdr['CRVAL1'] = crval1
-        hdr['CRVAL2'] = crval2
-        hdr['CRPIX1'] = crpix1
-        hdr['CRPIX2'] = crpix2
-        hdr['CTYPE1'] = 'RA---TAN'
-        hdr['CTYPE2'] = 'DEC--TAN'
+        #hdr['CRVAL1'] = crval1
+        #hdr['CRVAL2'] = crval2
+        #hdr['CRPIX1'] = crpix1
+        #hdr['CRPIX2'] = crpix2
+        #hdr['CTYPE1'] = 'RA---TAN'
+        #hdr['CTYPE2'] = 'DEC--TAN'
         hdr['A_RADIUS'] = radius
         hdr['B_RADIUS'] = radius
         hdr['C_RADIUS'] = radius
@@ -121,34 +121,41 @@ for arg in sys.argv:
             hdgeom4 = fits.open(mygeom4)
 
             ## Sparse description of coordinates
-            hdr['CRVAL1a'] = 1.0
-            hdr['CRVAL2a'] = 1.0
-            hdr['CRPIX1a'] = 0.5
-            hdr['CRPIX2a'] = 0.5
-            hdr['CTYPE1a'] = 'VELN-TAB'
-            hdr['CTYPE2a'] = 'VELT-TAB'
-            hdr['CD1_1a'] = 0.5
-            hdr['CD1_2a'] = 0.0
-            hdr['CD2_1a'] = 0.0
-            hdr['CD2_2a'] = 0.5
-            hdr['PC1_1a'] = 0.5
-            hdr['PC1_2a'] = 0.0
-            hdr['PC2_1a'] = 0.0
-            hdr['PC2_2a'] = 0.5
-            hdr['CDELT1a'] = 0.5
-            hdr['CDELT2a'] = 0.5
-            hdr['PS1_0a '] = 'WCS-TAB '
-            hdr['PS1_1a '] = 'COORDS  '
-            hdr['PS1_2a '] = 'INDEXLN '
-            hdr['PS2_0a '] = 'WCS-TAB '
-            hdr['PS2_1a '] = 'COORDS  '
-            hdr['PS2_2a '] = 'INDEXLT '
-            hdr['PV1_1a '] = 1
-            hdr['PV2_1a '] = 1
-            hdr['PV1_2a '] = 1
-            hdr['PV2_2a '] = 1
-            hdr['PV1_3a '] = 1
-            hdr['PV2_3a '] = 2
+            hdr['CRPIX1'] = 0.5
+            hdr['CRVAL1'] = 1.0
+            hdr['CRPIX2'] = 0.5
+            hdr['CRVAL2'] = 1.0
+
+            hdr['CD1_1'] = 2.
+            hdr['CD1_2'] = 0.0
+            hdr['CD2_1'] = 0.0
+            hdr['CD2_2'] = 2.
+
+            hdr['PC1_1'] = 1.0
+            hdr['PC1_2'] = 0.0
+            hdr['PC2_1'] = 0.0
+            hdr['PC2_2'] = 1.0
+
+            hdr['CDELT1'] = 2.
+            hdr['CDELT2'] = 2.
+
+
+            hdr['CTYPE1'] = 'VELN-TAB'
+            hdr['PS1_0 '] = 'WCS-TAB '
+            hdr['PS1_1 '] = 'COORDS  '
+            hdr['PS1_2 '] = 'LNINDEX '
+            hdr['PV1_1 '] = 1
+            hdr['PV1_2 '] = 1
+            hdr['PV1_3 '] = 1
+
+            hdr['CTYPE2'] = 'VELT-TAB'
+            hdr['PS2_0 '] = 'WCS-TAB '
+            hdr['PS2_1 '] = 'COORDS  '
+            hdr['PS2_2 '] = 'LTINDEX '
+            hdr['PV2_1 '] = 1
+            hdr['PV2_2 '] = 1
+            hdr['PV2_3 '] = 2
+
             ## sparse description of local time
             #hdr['CRVAL1b'] = 1.0
             #hdr['CRPIX1b'] = 0.5
@@ -181,7 +188,7 @@ for arg in sys.argv:
             hdgeom4.close()
 
             # Building long index
-            indexln = np.zeros([m+m4])
+            indexln = np.zeros((m+m4))
             for i in range(0,m4-1):
               lntest = LLlon[:,i]
               if len(lntest[~np.isnan(lntest)]):
@@ -194,7 +201,7 @@ for arg in sys.argv:
             xmax = len(newindexln)
 
             # Building lat index
-            indexlt = np.zeros([n+n4])
+            indexlt = np.zeros((n+n4))
             for j in range(0,n4-1):
               lttest = LLlat[j,:]
               if len(lttest[~np.isnan(lttest)]):
@@ -207,7 +214,7 @@ for arg in sys.argv:
             ymax = len(newindexlt)
 
             # Building coordinate array
-            coordsarr = np.zeros([ymax,xmax,2])
+            coordsarr = np.zeros((ymax,xmax,2))
 
             for j in range(0,ymax):
               for i in range(0,xmax):
@@ -216,13 +223,18 @@ for arg in sys.argv:
                   if indj % 2 == 0:
                       myj = int(indj / 2) - 1
                       myi = int(indi / 2) - 1
+                      #if ~np.isnan(lon[myj,myi]) and ~np.isnan(lat[myj,myi]):
                       coordsarr[j,i,0] = lon[myj,myi]
                       coordsarr[j,i,1] = lat[myj,myi]
                   else:
                       myj = int((indj - 1) / 2)
                       myi = int((indi - 1) / 2)
+                      #if ~np.isnan(LLlon[myj,myi]) and ~np.isnan(LLlat[myj,myi]):
                       coordsarr[j,i,0] = LLlon[myj,myi]
                       coordsarr[j,i,1] = LLlat[myj,myi]
+
+            coordsarr[~np.isnan(coordsarr)]
+
                   #tlt.append(LLlt[i,j])
                   #newpa = np.append(newpa,LLpa[i,j])
                   #newia = np.append(newia,LLia[i,j])
@@ -243,7 +255,8 @@ for arg in sys.argv:
           indln  = fits.Column(name=ttype[1], format=tform[1], array=[newindexln])
           indlt  = fits.Column(name=ttype[2], format=tform[2], array=[newindexlt])
           tbhdu = fits.BinTableHDU.from_columns([coords,indln,indlt])
-          tbhdu.header.set('extname', 'WCS-TAB')
+          tbhdu.header.set('extname', 'WCS-TAB ')
+          tbhdu.header.set('extver ', 1)
         else:
           print('Cannot find geom file {0:s}!\n'.format(mygeom))
 
