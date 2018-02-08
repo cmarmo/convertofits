@@ -213,11 +213,42 @@ for arg in sys.argv:
           continue
 
         ### Writing FITS files ###
+
+        ### TAB formatting ###
         form = str(2*mysamples*mylines)
         ttype = "COORDS"
         tform= form+'J';
         tunit = 'deg';
         tdim = '(2,' + str(mysamples) + ',' + str(mylines) + ')'
+
+        ### WCS-TAB header info ###
+        head = fits.Header()
+        head.set('ctype1', 'MALN-TAB')
+        head.set('ctype2', 'MALT-TAB')
+        head.set('CRPIX1', 1.0)
+        head.set('CRPIX2', 1.0)
+        head.set('CRVAL1', 1.0)
+        head.set('CRVAL2', 1.0)
+        head.set('CD1_1', 1.0)
+        head.set('CD2_2', 1.0)
+        head.set('CD1_2', 0.0)
+        head.set('CD2_1', 0.0)
+        head.set('PC1_1', 1.0)
+        head.set('PC2_2', 1.0)
+        head.set('PC1_2', 0.0)
+        head.set('PC2_1', 0.0)
+        head.set('CDELT1', 1.0)
+        head.set('CDELT2', 1.0)
+        head.set('PS1_0 ', 'WCS-TAB ')
+        head.set('PS1_1 ', 'COORDS ')
+        head.set('PS2_0 ', 'WCS-TAB ')
+        head.set('PS2_1 ', 'COORDS ')
+        head.set('PV1_1 ', 1)
+        head.set('PV2_1 ', 1)
+        head.set('PV1_2 ', 1)
+        head.set('PV2_2 ', 1)
+        head.set('PV1_3 ', 1)
+        head.set('PV2_3 ', 2)
 
         # SWIR-C channel #
         hduIR1 = fits.PrimaryHDU(bsqIR1)
@@ -227,33 +258,7 @@ for arg in sys.argv:
         hdupaIR1 = fits.ImageHDU(paIR1)
         listIR1 = fits.HDUList([hduIR1,tbhduIR1,hduincIR1,hduemIR1,hdupaIR1])
         IR1hdr = listIR1[0].header
-        IR1hdr.set('ctype1', 'MALN-TAB')
-        IR1hdr.set('ctype2', 'MALT-TAB')
-        IR1hdr.set('CRPIX1', 1.0)
-        IR1hdr.set('CRPIX2', 1.0)
-        IR1hdr.set('CRVAL1', 1.0)
-        IR1hdr.set('CRVAL2', 1.0)
-        IR1hdr.set('CD1_1', 1.0)
-        IR1hdr.set('CD2_2', 1.0)
-        IR1hdr.set('CD1_2', 0.0)
-        IR1hdr.set('CD2_1', 0.0)
-        IR1hdr.set('PC1_1', 1.0)
-        IR1hdr.set('PC2_2', 1.0)
-        IR1hdr.set('PC1_2', 0.0)
-        IR1hdr.set('PC2_1', 0.0)
-        IR1hdr.set('CDELT1', 1.0)
-        IR1hdr.set('CDELT2', 1.0)
-        IR1hdr.set('PS1_0 ', 'WCS-TAB ')
-        IR1hdr.set('PS1_1 ', 'COORDS ')
-        IR1hdr.set('PS2_0 ', 'WCS-TAB ')
-        IR1hdr.set('PS2_1 ', 'COORDS ')
-        IR1hdr.set('PV1_1 ', 1)
-        IR1hdr.set('PV2_1 ', 1)
-        IR1hdr.set('PV1_2 ', 1)
-        IR1hdr.set('PV2_2 ', 1)
-        IR1hdr.set('PV1_3 ', 1)
-        IR1hdr.set('PV2_3 ', 2)
-
+        IR1hdr += head
         IR1thdr = listIR1[1].header
         IR1thdr.set('extname', 'WCS-TAB')
         IR1thdr.set('TSCAL1', factor)
@@ -276,33 +281,7 @@ for arg in sys.argv:
         hdupaIR2 = fits.ImageHDU(paIR2)
         listIR2 = fits.HDUList([hduIR2,tbhduIR2,hduincIR2,hduemIR2,hdupaIR2])
         IR2hdr = listIR2[0].header
-        IR2hdr.set('ctype1', 'MALN-TAB')
-        IR2hdr.set('ctype2', 'MALT-TAB')
-        IR2hdr.set('CRPIX1', 1.0)
-        IR2hdr.set('CRPIX2', 1.0)
-        IR2hdr.set('CRVAL1', 1.0)
-        IR2hdr.set('CRVAL2', 1.0)
-        IR2hdr.set('CD1_1', 1.0)
-        IR2hdr.set('CD2_2', 1.0)
-        IR2hdr.set('CD1_2', 0.0)
-        IR2hdr.set('CD2_1', 0.0)
-        IR2hdr.set('PC1_1', 1.0)
-        IR2hdr.set('PC2_2', 1.0)
-        IR2hdr.set('PC1_2', 0.0)
-        IR2hdr.set('PC2_1', 0.0)
-        IR2hdr.set('CDELT1', 1.0)
-        IR2hdr.set('CDELT2', 1.0)
-        IR2hdr.set('PS1_0 ', 'WCS-TAB ')
-        IR2hdr.set('PS1_1 ', 'COORDS ')
-        IR2hdr.set('PS2_0 ', 'WCS-TAB ')
-        IR2hdr.set('PS2_1 ', 'COORDS ')
-        IR2hdr.set('PV1_1 ', 1)
-        IR2hdr.set('PV2_1 ', 1)
-        IR2hdr.set('PV1_2 ', 1)
-        IR2hdr.set('PV2_2 ', 1)
-        IR2hdr.set('PV1_3 ', 1)
-        IR2hdr.set('PV2_3 ', 2)
-
+        IR2hdr += head
         IR2thdr = listIR2[1].header
         IR2thdr.set('extname', 'WCS-TAB')
         IR2thdr.set('TSCAL1', factor)
@@ -325,33 +304,7 @@ for arg in sys.argv:
         hdupaV = fits.ImageHDU(paV)
         listV = fits.HDUList([hduV,tbhduV,hduincV,hduemV,hdupaV])
         Vhdr = listV[0].header
-        Vhdr.set('ctype1', 'MALN-TAB')
-        Vhdr.set('ctype2', 'MALT-TAB')
-        Vhdr.set('CRPIX1', 1.0)
-        Vhdr.set('CRPIX2', 1.0)
-        Vhdr.set('CRVAL1', 1.0)
-        Vhdr.set('CRVAL2', 1.0)
-        Vhdr.set('CD1_1', 1.0)
-        Vhdr.set('CD2_2', 1.0)
-        Vhdr.set('CD1_2', 0.0)
-        Vhdr.set('CD2_1', 0.0)
-        Vhdr.set('PC1_1', 1.0)
-        Vhdr.set('PC2_2', 1.0)
-        Vhdr.set('PC1_2', 0.0)
-        Vhdr.set('PC2_1', 0.0)
-        Vhdr.set('CDELT1', 1.0)
-        Vhdr.set('CDELT2', 1.0)
-        Vhdr.set('PS1_0 ', 'WCS-TAB ')
-        Vhdr.set('PS1_1 ', 'COORDS ')
-        Vhdr.set('PS2_0 ', 'WCS-TAB ')
-        Vhdr.set('PS2_1 ', 'COORDS ')
-        Vhdr.set('PV1_1 ', 1)
-        Vhdr.set('PV2_1 ', 1)
-        Vhdr.set('PV1_2 ', 1)
-        Vhdr.set('PV2_2 ', 1)
-        Vhdr.set('PV1_3 ', 1)
-        Vhdr.set('PV2_3 ', 2)
-
+        Vhdr += head
         Vthdr = listV[1].header
         Vthdr.set('extname', 'WCS-TAB')
         Vthdr.set('TSCAL1', factor)
