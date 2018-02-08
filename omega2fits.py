@@ -208,18 +208,6 @@ for arg in sys.argv:
             offset=myfile.tell()+(10*bytex)
             myfile.seek(offset)
           factor = 0.0001
-          newcoordsIR1 = factor * coordsIR1
-          newincIR1 = factor * incIR1
-          newemIR1 = factor * emIR1
-          newpaIR1 = factor * paIR1
-          newcoordsIR2 = factor * coordsIR2
-          newincIR2 = factor * incIR2
-          newemIR2 = factor * emIR2
-          newpaIR2 = factor * paIR2
-          newcoordsV = factor * coordsV
-          newincV = factor * incV
-          newemV = factor * emV
-          newpaV = factor * paV
         else:
           print 'Cannot find geometry for image %s!\n' %(myimage)
           continue
@@ -227,16 +215,16 @@ for arg in sys.argv:
         ### Writing FITS files ###
         form = str(2*mysamples*mylines)
         ttype = "COORDS"
-        tform= form+'D';
+        tform= form+'J';
         tunit = 'deg';
         tdim = '(2,' + str(mysamples) + ',' + str(mylines) + ')'
 
         # SWIR-C channel #
         hduIR1 = fits.PrimaryHDU(bsqIR1)
-        tbhduIR1 = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[newcoordsIR1])])
-        hduincIR1 = fits.ImageHDU(newincIR1)
-        hduemIR1 = fits.ImageHDU(newemIR1)
-        hdupaIR1 = fits.ImageHDU(newpaIR1)
+        tbhduIR1 = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsIR1])])
+        hduincIR1 = fits.ImageHDU(incIR1)
+        hduemIR1 = fits.ImageHDU(emIR1)
+        hdupaIR1 = fits.ImageHDU(paIR1)
         listIR1 = fits.HDUList([hduIR1,tbhduIR1,hduincIR1,hduemIR1,hdupaIR1])
         IR1hdr = listIR1[0].header
         IR1hdr.set('ctype1', 'MALN-TAB')
@@ -268,20 +256,24 @@ for arg in sys.argv:
 
         IR1thdr = listIR1[1].header
         IR1thdr.set('extname', 'WCS-TAB')
+        IR1thdr.set('TSCAL1', factor)
         IR1ihdr = listIR1[2].header
         IR1ihdr.set('extname', 'INCIDENCE')
+        IR1ihdr.set('BSCALE', factor)
         IR1ehdr = listIR1[3].header
         IR1ehdr.set('extname', 'EMISSION')
+        IR1ehdr.set('BSCALE', factor)
         IR1pahdr = listIR1[4].header
         IR1pahdr.set('extname', 'PHASE-ANGLE')
+        IR1pahdr.set('BSCALE', factor)
         listIR1.writeto(myfitsIR1)
 
         # SWIR-L channel #
         hduIR2 = fits.PrimaryHDU(bsqIR2)
-        tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[newcoordsIR2])])
-        hduincIR2 = fits.ImageHDU(newincIR2)
-        hduemIR2 = fits.ImageHDU(newemIR2)
-        hdupaIR2 = fits.ImageHDU(newpaIR2)
+        tbhduIR2 = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsIR2])])
+        hduincIR2 = fits.ImageHDU(incIR2)
+        hduemIR2 = fits.ImageHDU(emIR2)
+        hdupaIR2 = fits.ImageHDU(paIR2)
         listIR2 = fits.HDUList([hduIR2,tbhduIR2,hduincIR2,hduemIR2,hdupaIR2])
         IR2hdr = listIR2[0].header
         IR2hdr.set('ctype1', 'MALN-TAB')
@@ -313,20 +305,24 @@ for arg in sys.argv:
 
         IR2thdr = listIR2[1].header
         IR2thdr.set('extname', 'WCS-TAB')
+        IR2thdr.set('TSCAL1', factor)
         IR2ihdr = listIR2[2].header
         IR2ihdr.set('extname', 'INCIDENCE')
+        IR2ihdr.set('BSCALE', factor)
         IR2ehdr = listIR2[3].header
         IR2ehdr.set('extname', 'EMISSION')
+        IR2ehdr.set('BSCALE', factor)
         IR2pahdr = listIR2[4].header
         IR2pahdr.set('extname', 'PHASE-ANGLE')
+        IR2pahdr.set('BSCALE', factor)
         listIR2.writeto(myfitsIR2)
 
         # VNIR channel #
         hduV = fits.PrimaryHDU(bsqV)
-        tbhduV = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[newcoordsV])])
-        hduincV = fits.ImageHDU(newincV)
-        hduemV = fits.ImageHDU(newemV)
-        hdupaV = fits.ImageHDU(newpaV)
+        tbhduV = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsV])])
+        hduincV = fits.ImageHDU(incV)
+        hduemV = fits.ImageHDU(emV)
+        hdupaV = fits.ImageHDU(paV)
         listV = fits.HDUList([hduV,tbhduV,hduincV,hduemV,hdupaV])
         Vhdr = listV[0].header
         Vhdr.set('ctype1', 'MALN-TAB')
@@ -358,12 +354,16 @@ for arg in sys.argv:
 
         Vthdr = listV[1].header
         Vthdr.set('extname', 'WCS-TAB')
+        Vthdr.set('TSCAL1', factor)
         Vihdr = listV[2].header
         Vihdr.set('extname', 'INCIDENCE')
+        Vihdr.set('BSCALE', factor)
         Vehdr = listV[3].header
         Vehdr.set('extname', 'EMISSION')
+        Vehdr.set('BSCALE', factor)
         Vpahdr = listV[4].header
         Vpahdr.set('extname', 'PHASE-ANGLE')
+        Vpahdr.set('BSCALE', factor)
         listV.writeto(myfitsV)
 
       else:
