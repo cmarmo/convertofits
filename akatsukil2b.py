@@ -20,27 +20,6 @@ for arg in sys.argv:
         hdr = hdu[1].header
         dim1 = hdr['NAXIS1']
         dim2 = hdr['NAXIS2']
-        flipflag = hdr['P_FLPROT']
-        crval1 = hdr['S_RA']
-        crval2 = hdr['S_DEC']
-        crpix1 = 0.5 + (dim1 / 2.)
-        crpix2 = 0.5 + (dim2 / 2.)
-        blra = hdr['S_RA1']
-        bldec = hdr['S_DEC1']
-        brra = hdr['S_RA2']
-        brdec = hdr['S_DEC2']
-        tlra = hdr['S_RA3']
-        tldec = hdr['S_DEC3']
-        trra = hdr['S_RA4']
-        trdec = hdr['S_DEC4']
-        blpx = 0.5
-        blpy = 0.5
-        brpx = dim1 + 0.5
-        brpy = 0.5
-        tlpx = 0.5
-        tlpy = dim2 + 0.5
-        trpx = dim1 + 0.5
-        trpy = dim2 + 0.5
 
         if os.path.exists(mylabel):
           label = open(mylabel,'r')
@@ -51,66 +30,10 @@ for arg in sys.argv:
             if (temp[0].strip(' ') == "VCO:SPHERICAL_RADIUS"):
               radiuss = (temp[1].strip(' ')).split(' ')
               radius = float(radiuss[0])*1000.
-            if (temp[0].strip(' ') == "HORIZONTAL_PIXEL_FOV"):
-              hfovrads = (temp[1].strip(' ')).split(' ')
-              hfovrad = float(hfovrads[0])
-            if (temp[0].strip(' ') == "VERTICAL_PIXEL_FOV"):
-              vfovrads = (temp[1].strip(' ')).split(' ')
-              vfovrad = float(vfovrads[0])
 
-          # from spherical right-angle triangles
-
-          coscp = math.cos(hfovrad*degtorad*(trpx-brpx)) * math.cos(vfovrad*degtorad*(trpy-brpy))
-          cosap = math.cos(hfovrad*degtorad*(trpx-blpx)) * math.cos(vfovrad*degtorad*(trpy-blpy))
-          cosbp = math.cos(hfovrad*degtorad*(brpx-blpx)) * math.cos(vfovrad*degtorad*(brpy-blpy))
-          sinap = math.sin(math.acos(cosap))
-          sinbp = math.sin(math.acos(cosbp))
-          cosxy = (coscp - cosap * cosbp) / (sinap*sinbp)
-
-          cosc = math.cos(degtorad*(trra-brra)) * math.cos(degtorad*(trdec-brdec))
-          cosa = math.cos(degtorad*(trra-blra)) * math.cos(degtorad*(trdec-bldec))
-          cosb = math.cos(degtorad*(brra-blra)) * math.cos(degtorad*(brdec-bldec))
-          sina = math.sin(math.acos(cosa))
-          sinb = math.sin(math.acos(cosb))
-          cosad = (cosc - cosa * cosb) / (sina*sinb)
-
-          theta = math.acos(cosxy) - math.acos(cosad)
-
-
-          cdelt1 = hfovrad * radtodeg # from horizontal pixel field of view in the label (in degrees)
-          cdelt2 = vfovrad * radtodeg # from vertical pixel field of view in the label (in degrees)
-          pc11 = math.cos(theta)
-          pc12 = -math.sin(theta)
-          pc21 = math.sin(theta)
-          pc22 = math.cos(theta)
-
-          if flipflag == 10:
-            cdelt2 = -cdelt2 # images are y-flipped
-
-          if flipflag == 3:
-            pc11 = pc11
-            pc12 = -pc12
-            pc21 = pc21
-            pc22 = -pc22 # images are rotated CCW 270 deg 
-          #hdr['CDELT1'] = cdelt1
-          #hdr['CDELT2'] = cdelt2
-          #hdr['PC1_1'] = pc11
-          #hdr['PC1_2'] = pc12
-          #hdr['PC2_1'] = pc21
-          #hdr['PC2_2'] = pc22
-          #hdr['CD1_1'] = pc11 * cdelt1
-          #hdr['CD1_2'] = pc12 * cdelt1
-          #hdr['CD2_1'] = pc21 * cdelt2
-          #hdr['CD2_2'] = pc22 * cdelt2
         else:
           print('WARNING!! Cannot find label {0:s}!\n'.format(mylabel))
 
-        #hdr['CRVAL1'] = crval1
-        #hdr['CRVAL2'] = crval2
-        #hdr['CRPIX1'] = crpix1
-        #hdr['CRPIX2'] = crpix2
-        #hdr['CTYPE1'] = 'RA---TAN'
-        #hdr['CTYPE2'] = 'DEC--TAN'
         hdr['A_RADIUS'] = radius
         hdr['B_RADIUS'] = radius
         hdr['C_RADIUS'] = radius
@@ -121,19 +44,16 @@ for arg in sys.argv:
             hdgeom4 = fits.open(mygeom4)
 
             ## Sparse description of coordinates
+
             hdr['CRPIX1'] = 0.5
             hdr['CRVAL1'] = 1.0
             hdr['CRPIX2'] = 0.5
             hdr['CRVAL2'] = 1.0
 
             hdr['CD1_1'] = 2.
-            hdr['CD1_2'] = 0.0
-            hdr['CD2_1'] = 0.0
             hdr['CD2_2'] = 2.
 
             hdr['PC1_1'] = 1.0
-            hdr['PC1_2'] = 0.0
-            hdr['PC2_1'] = 0.0
             hdr['PC2_2'] = 1.0
 
             hdr['CDELT1'] = 2.
@@ -156,15 +76,6 @@ for arg in sys.argv:
             hdr['PV2_2 '] = 1
             hdr['PV2_3 '] = 2
 
-            ## sparse description of local time
-            #hdr['CRVAL1b'] = 1.0
-            #hdr['CRPIX1b'] = 0.5
-            #hdr['CTYPE1b'] = 'VET--TAB'
-            #hdr['CD1_1b'] = 0.5
-            #hdr['PS1_0b '] = 'WCS-TAB '
-            #hdr['PS1_1b '] = 'LOCTIME '
-            #hdr['PS1_2b '] = 'INDEX   '
-            #hdr['PV1_1b '] = 1.0
             lon = hdgeom['Longitude'].data
             lat = hdgeom['Latitude'].data
             lt = hdgeom['Local time'].data
@@ -180,10 +91,10 @@ for arg in sys.argv:
             LLlon = hdgeom4['LL Longitude'].data
             LLlat = hdgeom4['LL Latitude'].data
             LLlt = hdgeom4['LL Local time'].data
-            LLpa = hdgeom['Phase angle'].data
-            LLia = hdgeom['Incidence angle'].data
-            LLea = hdgeom['Emission angle'].data
-            LLaa = hdgeom['Azimuthal angle'].data
+            LLpa = hdgeom4['LL Phase angle'].data
+            LLia = hdgeom4['LL Incidence angle'].data
+            LLea = hdgeom4['LL Emission angle'].data
+            LLaa = hdgeom4['LL Azimuthal angle'].data
             [m4,n4] = LLlon.shape
             hdgeom4.close()
 
@@ -226,20 +137,18 @@ for arg in sys.argv:
                       #if ~np.isnan(lon[myj,myi]) and ~np.isnan(lat[myj,myi]):
                       coordsarr[j,i,0] = lon[myj,myi]
                       coordsarr[j,i,1] = lat[myj,myi]
+                      #coordsarr[j,i,2] = ia[myj,myi]
+                      #coordsarr[j,i,3] = ea[myj,myi]
                   else:
                       myj = int((indj - 1) / 2)
                       myi = int((indi - 1) / 2)
                       #if ~np.isnan(LLlon[myj,myi]) and ~np.isnan(LLlat[myj,myi]):
                       coordsarr[j,i,0] = LLlon[myj,myi]
                       coordsarr[j,i,1] = LLlat[myj,myi]
+                      #coordsarr[j,i,2] = LLia[myj,myi]
+                      #coordsarr[j,i,3] = LLea[myj,myi]
 
             coordsarr[~np.isnan(coordsarr)]
-
-                  #tlt.append(LLlt[i,j])
-                  #newpa = np.append(newpa,LLpa[i,j])
-                  #newia = np.append(newia,LLia[i,j])
-                  #newea = np.append(newea,LLea[i,j])
-                  #newaa = np.append(newaa,LLaa[i,j])
 
           else:
             print('Cannot find geom file {0:s}!\n'.format(mygeom4))
