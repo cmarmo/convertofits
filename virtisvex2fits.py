@@ -16,12 +16,9 @@ for arg in sys.argv:
     if (arg[0] != "-"):
       myimage = arg
 
-      ### Each omega cube is a three channel cube ###
-      # myfitsIR1 = myimage.replace("qub","IR1.fits")
-      # myfitsIR2 = myimage.replace("qub","IR2.fits")
-      # myfitsV = myimage.replace("qub","V.fits")
-      myfits = myimage.replace("QUB","fits")
-      mygeom = myimage.replace("QUB","GEO")
+      myfits = myimage.replace("CAL","fits")
+      mygeom = myimage.replace("CAL","GEO")
+
 
       if os.path.exists(myimage):
         toparse = myimage
@@ -37,6 +34,14 @@ for arg in sys.argv:
           if (line == "END\r\n" or line == "END\n"):
             break
           temp = line.split('=')
+          if (temp[0].strip(' ') == "PRODUCER_ID"):
+            author = (temp[1].strip(' ')).strip('\r\n')
+          if (temp[0].strip(' ') == "INSTRUMENT_HOST_NAME"):
+            telescop = (temp[1].strip(' ')).strip('\r\n')
+          if (temp[0].strip(' ') == "INSTRUMENT_ID"):
+            instrume = (temp[1].strip(' ')).strip('\r\n')
+          if (temp[0].strip(' ') == "TARGET_NAME"):
+            target = (temp[1].strip(' ')).strip('\r\n')
           if (temp[0].strip(' ') == "RECORD_BYTES"):
             rbytes = int(temp[1].strip(' '))
           if (temp[0].strip(' ') == "^QUBE"):
@@ -58,28 +63,26 @@ for arg in sys.argv:
           if (temp[0].strip(' ') == "CORE_ITEM_BYTES"):
             imbytes = int(temp[1].strip(' '))
             sbit = 8 * imbytes
-          if (temp[0].strip(' ') == "SAMPLE_SUFFIX_ITEM_BYTES"):
-            sidebytes = int(temp[1].strip(' '))
+          if (temp[0].strip(' ') == "SUFFIX_BYTES"):
+            sbytes = int(temp[1].strip(' '))
           if (temp[0].strip(' ') == "SUFFIX_ITEMS"):
             mydim = (temp[1].strip(' \r\n')).split(',')
             sbands = int(re.sub(r'[^\w]', ' ', mydim[0]))
             ssamples = int(re.sub(r'[^\w]', ' ', mydim[1]))
             slines = int(re.sub(r'[^\w]', ' ', mydim[2]))
-          if (temp[0].strip(' ') == "BAND_SUFFIX_ITEM_BYTES"):
-            backbytes = int(temp[1].strip(' '))
           continue
 
-        #IRbands = 128
-        #dimIR = (IRbands, mylines, mysamples)
-        #dimV = (mybands-(2*IRbands), mylines, mysamples)
-        dim = (mybands, mylines, mysamples)
+        dim = (mylines, mysamples, mybands)
+        print(dim)
         if (sbit == 8):
           mytype = np.int8
           myform = ""
         if (sbit == 16):
           if (tbyte[1] == "UNSIGNED"):
             mytype = np.uint16
-            myform = "H" 
+            myform = "H"
+            bzero = 32768.0
+            bscale = 1.
           else:
             mytype = np.int16
             myform = "h"
@@ -98,40 +101,39 @@ for arg in sys.argv:
             mytype = np.float64
             myform = "d"
         bsq = np.zeros(dim,dtype=mytype)
-        #bsqIR1 = np.zeros(dimIR,dtype=mytype)
-        #bsqIR2 = np.zeros(dimIR,dtype=mytype)
-        #bsqV = np.zeros(dimV,dtype=mytype)
-        form = str(mysamples) + myform
+        form = str(mybands) + myform
         if ((rbytes != 0) and (lastlabrec != 0)):
           myskip = rbytes * lastlabrec
         myfile.seek(myskip)
-        bytex = mysamples * imbytes
-        try: sidebytes
+        bytex = mybands * imbytes
+        try: sbytes
         except:
-          sidebytes = 0
-        try: backbytes
-        except:
-          backbytes = 0
+          sbytes = 0
 
         ### reading data ###
         for y in range(0, mylines):
-          for z in range(0, mybands):
+          for x in range(0, mysamples):
             contents=myfile.read(bytex)
-            bsq[z,y,:]=unpack_from(form, contents)
+            bsq[y,x,:]=unpack_from(form, contents)
             #if (z<IRbands):
             #  bsqIR1[z,y,:]=unpack_from(form, contents)
             #elif (z<2*IRbands):
             #  bsqIR2[z-IRbands,y,:]=unpack_from(form, contents)
             #else:
             #  bsqV[z-(2*IRbands),y,:]=unpack_from(form, contents)
-            offset=myfile.tell()+backbytes
+            offset=myfile.tell()+ (sbands*sbytes)
             myfile.seek(offset)
 
-          offset=myfile.tell()+(sidebytes*mysamples*sbands)
+          offset=myfile.tell()+ sbytes*ssamples*(mybands+sbands)
           myfile.seek(offset)
 
         myfile.close()
         hdu = fits.PrimaryHDU(bsq)
+        hdr = hdu.header
+        hdr['TELESCOP'] = telescop
+        hdr['AUTHOR'] = author
+        hdr['OBJECT'] = target
+        hdr['INSTRUME'] = instrume
         hdu.writeto(myfits)
 
       else:
