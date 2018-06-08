@@ -41,6 +41,8 @@ for arg in sys.argv:
             telescop = (temp[1].strip(' ')).strip('\r\n')
           if (temp[0].strip(' ') == "INSTRUMENT_ID"):
             instrume = (temp[1].strip(' ')).strip('\r\n')
+          if (temp[0].strip(' ') == "INSTRUMENT_MODE_ID"):
+            instrmode = int((temp[1].strip(' ')).strip('\r\n'))
           if (temp[0].strip(' ') == "TARGET_NAME"):
             target = (temp[1].strip(' ')).strip('\r\n')
           if (temp[0].strip(' ') == "RECORD_BYTES"):
@@ -74,7 +76,6 @@ for arg in sys.argv:
           continue
 
         dim = (mylines, mysamples, mybands)
-        print(dim)
         if (sbit == 8):
           mytype = np.int8
           myform = ""
@@ -101,7 +102,6 @@ for arg in sys.argv:
           else:
             mytype = np.float64
             myform = "d"
-        bsq = np.zeros(dim,dtype=mytype)
         form = str(mybands) + myform
         if ((rbytes != 0) and (lastlabrec != 0)):
           myskip = rbytes * lastlabrec
@@ -112,26 +112,46 @@ for arg in sys.argv:
           sbytes = 0
 
         ### reading data ###
-        for y in range(0, mylines):
-          for x in range(0, mysamples):
-            contents=myfile.read(bytex)
-            bsq[y,x,:]=unpack_from(form, contents)
-            offset=myfile.tell()+ (sbands*sbytes)
-            myfile.seek(offset)
-
-          offset=myfile.tell()+ sbytes*ssamples*(mybands+sbands)
+        if (instrmode==7 and mybands==3456):
+          dim7 = (1, 1, mybands)
+          bsq = np.zeros(dim7,dtype=mytype)
+          bsdark = np.zeros(dim7,dtype=mytype)
+          contents=myfile.read(bytex)
+          bsq[0,0,:]=unpack_from(form, contents)
+          offset=myfile.tell()+ (sbands*sbytes)
           myfile.seek(offset)
+          bsdark[0,0,:]=unpack_from(form, contents)        
+        else :
+          bsq = np.zeros(dim,dtype=mytype)
+          for y in range(0, mylines):
+            for x in range(0, mysamples):
+              contents=myfile.read(bytex)
+              bsq[y,x,:]=unpack_from(form, contents)
+              offset=myfile.tell()+ (sbands*sbytes)
+              myfile.seek(offset)
+
+            offset=myfile.tell()+ sbytes*ssamples*(mybands+sbands)
+            myfile.seek(offset)
 
         myfile.close()
 
         ### writing FITS ###
         hdu = fits.PrimaryHDU(bsq)
-        hdr = hdu.header
+        try:
+          hdudark = fits.ImageHDU(bsdark)
+          listfits = fits.HDUList([hdu,hdudark])
+          hdrdark = hdudark.header
+          hdrdark['EXTNAME'] = 'DARK'
+        except:
+          hdr = hdu.header
         hdr['TELESCOP'] = telescop
         hdr['AUTHOR'] = author
         hdr['OBJECT'] = target
         hdr['INSTRUME'] = instrume
-        hdu.writeto(myfits)
+        try:
+          listfits.writeto(myfits)
+        except:
+          hdu.writeto(myfits)
 
       else:
         print 'Cannot find image %s!\n' %(myimage)
