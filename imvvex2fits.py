@@ -31,7 +31,7 @@ for arg in sys.argv:
         myskip = 0
         rbytes = 1
         lastlabrec = 0
-        myarch = 'littleendian'
+        myarch = '>'
         lablines = 0
         for line in myfile:
           lablines = lablines + 1
@@ -63,9 +63,9 @@ for arg in sys.argv:
           if (temp[0].strip(' ') == "CORE_ITEM_TYPE"):
             tbyte = (temp[1].strip(' ')).split('_')
             if (tbyte[0] == "LSB" or tbyte[0] == "PC" or tbyte[0] == "VAX"):
-                myarch = 'littleendian'
+                myarch = '<'
             if (tbyte[0] == "MSB" or tbyte[0] == "MAC" or tbyte[0] == "SUN"):
-                myarch = 'bigendian'
+                myarch = '>'
           if (temp[0].strip(' ') == "CORE_ITEM_BYTES"):
             imbytes = int(temp[1].strip(' '))
             sbit = 8 * imbytes
@@ -78,7 +78,7 @@ for arg in sys.argv:
             slines = int(re.sub(r'[^\w]', ' ', mydim[2]))
           continue
 
-        dim = (mylines, mysamples, mybands)
+        dim = (mybands, mylines, mysamples)
         if (sbit == 8):
           mytype = np.int8
           myform = ""
@@ -105,36 +105,27 @@ for arg in sys.argv:
           else:
             mytype = np.float64
             myform = "d"
-        form = str(mybands) + myform
+        form = myarch + str(mysamples) + myform
+        print(form)
         if ((rbytes != 0) and (lastlabrec != 0)):
           myskip = rbytes * lastlabrec
         myfile.seek(myskip)
-        bytex = mybands * imbytes
+        bytex = mysamples * imbytes
         try: sbytes
         except:
           sbytes = 0
 
         ### reading data ###
-        if (instrmode==7 and mybands==3456):
-          dim7 = (1, 1, mybands)
-          bsq = np.zeros(dim7,dtype=mytype)
-          bsdark = np.zeros(dim7,dtype=mytype)
-          contents=myfile.read(bytex)
-          bsq[0,0,:]=unpack_from(form, contents)
-          offset=myfile.tell()+ (sbands*sbytes)
-          myfile.seek(offset)
-          bsdark[0,0,:]=unpack_from(form, contents)        
-        else :
-          bsq = np.zeros(dim,dtype=mytype)
-          for y in range(0, mylines):
-            for x in range(0, mysamples):
-              contents=myfile.read(bytex)
-              bsq[y,x,:]=unpack_from(form, contents)
-              offset=myfile.tell()+ (sbands*sbytes)
-              myfile.seek(offset)
-
-            offset=myfile.tell()+ sbytes*ssamples*(mybands+sbands)
+        bsq = np.zeros(dim,dtype=mytype)
+        for y in range(0, mylines):
+          for z in range(0, mybands):
+            contents=myfile.read(bytex)
+            bsq[z,y,:]=unpack_from(form, contents)
+            offset=myfile.tell()+ (ssamples*sbytes)
             myfile.seek(offset)
+
+          offset=myfile.tell()+ sbytes*(mysamples+ssamples)*sbands
+          myfile.seek(offset)
 
         myfile.close()
 
