@@ -16,10 +16,13 @@ for arg in sys.argv:
   if (i>0):
     if (arg[0] != "-"):
       myimage = arg
-
-      myfits = myimage.replace("QUB","fits")
-      mygeom = myimage.replace("QUB","GEO")
-
+      ext = re.compile("QUB")
+      test = ext.match(myimage)
+      if (test == None):
+        myfits = myimage.replace("CAL","fits")
+        mygeom = myimage.replace("CAL","GEO")
+      else:
+        myfits = myimage.replace("QUB","fits")
 
       if os.path.exists(myimage):
         toparse = myimage
