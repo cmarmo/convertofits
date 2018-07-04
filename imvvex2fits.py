@@ -105,25 +105,27 @@ for arg in sys.argv:
           else:
             mytype = np.float64
             myform = "d"
-        form = myarch + str(mysamples) + myform
+        form = myarch + str(mybands) + myform
         if ((rbytes != 0) and (lastlabrec != 0)):
           myskip = rbytes * lastlabrec
         myfile.seek(myskip)
-        bytex = mysamples * imbytes
+        bytex = mybands * imbytes
         try: sbytes
         except:
           sbytes = 0
 
         ### reading data ###
         bsq = np.zeros(dim,dtype=mytype)
+        #data = np.zeros((mybands,mysamples,mylines),dtype=mytype)
         for y in range(0, mylines):
-          for z in range(0, mybands):
+          for x in range(0, mysamples):
             contents=myfile.read(bytex)
-            bsq[z,y,:]=unpack_from(form, contents)
-            offset=myfile.tell()+ (ssamples*sbytes)
+            bsq[:,y,x] = unpack_from(form, contents)
+            offset=myfile.tell()+ (sbands*sbytes)
             myfile.seek(offset)
 
-          offset=myfile.tell()+ sbytes*(mysamples+ssamples)*sbands
+          #bsq[:,y,:] = data[:,:,y]
+          offset=myfile.tell()+ sbytes*(mybands+sbands)*ssamples
           myfile.seek(offset)
 
         myfile.close()
@@ -168,7 +170,7 @@ for arg in sys.argv:
             myskip = rbytes * lastlabrec
           myfile.seek(myskip)
           dim = (mylines,mysamples,2)
-          data = np.zeros((mybands,mylines,mysamples),dtype=np.int32)
+          data = np.zeros((mybands,mysamples,mylines),dtype=np.int32)
           coords = np.zeros(dim,dtype=np.int32)
           coordsa = np.zeros(dim,dtype=np.int32)
           coordsb = np.zeros(dim,dtype=np.int32)
@@ -177,19 +179,19 @@ for arg in sys.argv:
           pa = np.zeros((mylines,mysamples),dtype=np.int32)
           bytex = mybands * imbytes
           form = myarch + str(mybands) + 'i'
-          for x in range(0, mysamples):
-            for y in range(0, mylines):
+          for y in range(0, mylines):
+            for x in range(0, mysamples):
               contents=myfile.read(bytex)
-              data[:,y,x] = unpack_from(form, contents)
-          coords[:,:,0] = data[9,:,:]
-          coords[:,:,1] = data[10,:,:]
-          coordsa[:,:,0] = data[25,:,:]
-          coordsa[:,:,1] = data[26,:,:]
-          inc[:,:] = data[27,:,:]
-          em[:,:] = data[28,:,:]
-          pa[:,:] = data[29,:,:]
-          coordsb[:,:,0] = data[31,:,:]
-          coordsb[:,:,1] = data[32,:,:]
+              data[:,x,y] = unpack_from(form, contents)
+            coords[y,:,0] = data[9,:,y]
+            coords[y,:,1] = data[10,:,y]
+            coordsa[y,:,0] = data[25,:,y]
+            coordsa[y,:,1] = data[26,:,y]
+            inc[y,:] = data[27,:,y]
+            em[y,:] = data[28,:,y]
+            pa[y,:] = data[29,:,y]
+            coordsb[y,:,0] = data[31,:,y]
+            coordsb[y,:,1] = data[32,:,y]
           factor = 0.0001
         else:
           print 'Cannot find geometry for image %s!\n' %(myimage)
