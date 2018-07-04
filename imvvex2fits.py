@@ -127,9 +127,9 @@ for arg in sys.argv:
 
         ### reading data ###
         bsq = np.zeros(dim,dtype=mytype)
-        wl = np.zeros((1,mybands),dtype=mytype)
-        fwhm = np.zeros((1,mybands),dtype=mytype)
-        uncrtnt = np.zeros((1,mybands),dtype=mytype)
+        wl = np.zeros(mybands,dtype=mytype)
+        fwhm = np.zeros(mybands,dtype=mytype)
+        uncrtnt = np.zeros(mybands,dtype=mytype)
         for y in range(0, mylines):
           for x in range(0, mysamples):
             contents=myfile.read(bytex)
@@ -138,19 +138,14 @@ for arg in sys.argv:
             myfile.seek(offset)
 
         contents=myfile.read(bytex)
-        wl[0,:] = unpack_from(form, contents)
+        wl = unpack_from(form, contents)
         contents=myfile.read(bytex)
-        fwhm[0,:] = unpack_from(form, contents)
+        fwhm = unpack_from(form, contents)
         contents=myfile.read(bytex)
-        uncrtnt[0,:] = unpack_from(form, contents)
+        uncrtnt = unpack_from(form, contents)
          
 
         myfile.close()
-
-        ### Wavelength TAB formatting ###
-        wform = str(mybands)
-        wtform= wform+'E';
-        wtdim = '(' + wform + ')'
 
         if os.path.exists(mygeom):
           toparse = mygeom
@@ -336,9 +331,11 @@ for arg in sys.argv:
         tbhdu = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coords])])
         tbahdu = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsa])])
         tbbhdu = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsb])])
-        tbwhdu = fits.BinTableHDU.from_columns([fits.Column(name=names[0].strip('("'), unit=units[0].strip('("'), dim=wtdim, format=wtform, array=[wl]),
-                                                fits.Column(name=names[1].strip('"'), unit=units[1].strip('"'), dim=wtdim, format=wtform, array=[fwhm]),
-                                                fits.Column(name=names[2].strip('")'), unit=units[2].strip('")'), dim=wtdim, format=wtform, array=[uncrtnt])])
+        ### Wavelength TAB formatting ###
+        wtform= '1E';
+        tbwhdu = fits.BinTableHDU.from_columns([fits.Column(name=names[0].strip('("'), unit=units[0].strip('("'),  format=wtform, array=wl),
+                                                fits.Column(name=names[1].strip('"'), unit=units[1].strip('"'), format=wtform, array=fwhm),
+                                                fits.Column(name=names[2].strip('")'), unit=units[2].strip('")'),  format=wtform, array=uncrtnt)])
         hduinc = fits.ImageHDU(inc)
         hduem = fits.ImageHDU(em)
         hdupa = fits.ImageHDU(pa)
