@@ -8,7 +8,7 @@ from struct import *
 myversion = 1.1
 
 # HISTORY
-# 8/6/2018 It works with raw data: cubes are just translated in FITS 
+# 4/8/2018 It works with calibrated imaging data 
 # 22/3/2018 first version 
 
 i = 0
@@ -41,13 +41,13 @@ for arg in sys.argv:
           if (temp[0].strip(' ') == "PRODUCER_ID"):
             author = (temp[1].strip(' ')).strip('\r\n')
           if (temp[0].strip(' ') == "INSTRUMENT_HOST_NAME"):
-            telescop = (temp[1].strip(' ')).strip('\r\n')
+            telescop = (temp[1].strip(' ')).strip('\r\n').strip('"')
           if (temp[0].strip(' ') == "INSTRUMENT_ID"):
             instrume = (temp[1].strip(' ')).strip('\r\n')
           if (temp[0].strip(' ') == "INSTRUMENT_MODE_ID"):
             instrmode = int((temp[1].strip(' ')).strip('\r\n'))
           if (temp[0].strip(' ') == "TARGET_NAME"):
-            target = (temp[1].strip(' ')).strip('\r\n')
+            target = (temp[1].strip(' ')).strip('\r\n').strip('"')
           if (temp[0].strip(' ') == "RECORD_BYTES"):
             rbytes = int(temp[1].strip(' '))
           if (temp[0].strip(' ') == "^QUBE"):
@@ -69,6 +69,12 @@ for arg in sys.argv:
           if (temp[0].strip(' ') == "CORE_ITEM_BYTES"):
             imbytes = int(temp[1].strip(' '))
             sbit = 8 * imbytes
+          if (temp[0].strip(' ') == "CORE_NULL"):
+            blank = float(temp[1].strip(' '))
+          if (temp[0].strip(' ') == "CORE_VALID_MINIMUM"):
+            datamin = float(temp[1].strip(' '))
+          if (temp[0].strip(' ') == "CORE_UNIT"):
+            bunit = temp[1].strip(' \r\n').strip('"')
           if (temp[0].strip(' ') == "SUFFIX_BYTES"):
             sbytes = int(temp[1].strip(' '))
           if (temp[0].strip(' ') == "SUFFIX_ITEMS"):
@@ -76,6 +82,10 @@ for arg in sys.argv:
             sbands = int(re.sub(r'[^\w]', ' ', mydim[0]))
             ssamples = int(re.sub(r'[^\w]', ' ', mydim[1]))
             slines = int(re.sub(r'[^\w]', ' ', mydim[2]))
+          if (temp[0].strip(' ') == "LINE_SUFFIX_NAME"):
+            names = (temp[1].strip(' \r\n')).split(',')
+          if (temp[0].strip(' ') == "LINE_SUFFIX_UNIT"):
+            units = (temp[1].strip(' \r\n')).split(',')
           continue
 
         dim = (mybands, mylines, mysamples)
@@ -110,13 +120,16 @@ for arg in sys.argv:
           myskip = rbytes * lastlabrec
         myfile.seek(myskip)
         bytex = mybands * imbytes
+        
         try: sbytes
         except:
           sbytes = 0
 
         ### reading data ###
         bsq = np.zeros(dim,dtype=mytype)
-        #data = np.zeros((mybands,mysamples,mylines),dtype=mytype)
+        wl = np.zeros((1,mybands),dtype=mytype)
+        fwhm = np.zeros((1,mybands),dtype=mytype)
+        uncrtnt = np.zeros((1,mybands),dtype=mytype)
         for y in range(0, mylines):
           for x in range(0, mysamples):
             contents=myfile.read(bytex)
@@ -124,11 +137,20 @@ for arg in sys.argv:
             offset=myfile.tell()+ (sbands*sbytes)
             myfile.seek(offset)
 
-          #bsq[:,y,:] = data[:,:,y]
-          offset=myfile.tell()+ sbytes*(mybands+sbands)*ssamples
-          myfile.seek(offset)
+        contents=myfile.read(bytex)
+        wl[0,:] = unpack_from(form, contents)
+        contents=myfile.read(bytex)
+        fwhm[0,:] = unpack_from(form, contents)
+        contents=myfile.read(bytex)
+        uncrtnt[0,:] = unpack_from(form, contents)
+         
 
         myfile.close()
+
+        ### Wavelength TAB formatting ###
+        wform = str(mybands)
+        wtform= wform+'E';
+        wtdim = '(' + wform + ')'
 
         if os.path.exists(mygeom):
           toparse = mygeom
@@ -177,6 +199,13 @@ for arg in sys.argv:
           inc = np.zeros((mylines,mysamples),dtype=np.int32)
           em = np.zeros((mylines,mysamples),dtype=np.int32)
           pa = np.zeros((mylines,mysamples),dtype=np.int32)
+          incc = np.zeros((mylines,mysamples),dtype=np.int32)
+          emc = np.zeros((mylines,mysamples),dtype=np.int32)
+          pac = np.zeros((mylines,mysamples),dtype=np.int32)
+          topo = np.zeros((mylines,mysamples),dtype=np.int32)
+          topoc = np.zeros((mylines,mysamples),dtype=np.int32)
+          slant = np.zeros((mylines,mysamples),dtype=np.int32)
+          lt = np.zeros((mylines,mysamples),dtype=np.int32)
           bytex = mybands * imbytes
           form = myarch + str(mybands) + 'i'
           for y in range(0, mylines):
@@ -185,11 +214,18 @@ for arg in sys.argv:
               data[:,x,y] = unpack_from(form, contents)
             coords[y,:,0] = data[9,:,y]
             coords[y,:,1] = data[10,:,y]
+            inc[y,:] = data[11,:,y]
+            em[y,:] = data[12,:,y]
+            pa[y,:] = data[13,:,y]
+            topo[y,:] = data[14,:,y]
+            slant[y,:] = data[15,:,y]
+            lt[y,:] = data[16,:,y]
             coordsa[y,:,0] = data[25,:,y]
             coordsa[y,:,1] = data[26,:,y]
-            inc[y,:] = data[27,:,y]
-            em[y,:] = data[28,:,y]
-            pa[y,:] = data[29,:,y]
+            incc[y,:] = data[27,:,y]
+            emc[y,:] = data[28,:,y]
+            pac[y,:] = data[29,:,y]
+            topoc[y,:] = data[30,:,y]
             coordsb[y,:,0] = data[31,:,y]
             coordsb[y,:,1] = data[32,:,y]
           factor = 0.0001
@@ -300,33 +336,66 @@ for arg in sys.argv:
         tbhdu = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coords])])
         tbahdu = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsa])])
         tbbhdu = fits.BinTableHDU.from_columns([fits.Column(name=ttype, unit=tunit, dim=tdim, format=tform, array=[coordsb])])
+        tbwhdu = fits.BinTableHDU.from_columns([fits.Column(name=names[0].strip('("'), unit=units[0].strip('("'), dim=wtdim, format=wtform, array=[wl]),
+                                                fits.Column(name=names[1].strip('"'), unit=units[1].strip('"'), dim=wtdim, format=wtform, array=[fwhm]),
+                                                fits.Column(name=names[2].strip('")'), unit=units[2].strip('")'), dim=wtdim, format=wtform, array=[uncrtnt])])
         hduinc = fits.ImageHDU(inc)
         hduem = fits.ImageHDU(em)
         hdupa = fits.ImageHDU(pa)
-        listhdu = fits.HDUList([hdu,tbhdu,tbahdu,tbbhdu,hduinc,hduem,hdupa])
+        hduincc = fits.ImageHDU(incc)
+        hduemc = fits.ImageHDU(emc)
+        hdupac = fits.ImageHDU(pac)
+        hdutopo = fits.ImageHDU(topo)
+        hdutopoc = fits.ImageHDU(topoc)
+        hduslant = fits.ImageHDU(slant)
+        hdult = fits.ImageHDU(lt)
+        listhdu = fits.HDUList([hdu,tbhdu,tbahdu,tbbhdu,tbwhdu,hduinc,hduem,hdupa,hdutopo,hduslant,hdult,hduincc,hduemc,hdupac,hdutopoc])
+
         hdr = listhdu[0].header
-        hdr += head
-        thdr = listhdu[1].header
-        tahdr = listhdu[2].header
-        tbhdr = listhdu[3].header
-        thdr.set('extname', 'WCS-TAB')
-        tahdr.set('extname', 'WCS-CTAB')
-        tbhdr.set('extname', 'WCS-WTAB')
-        thdr.set('TSCAL1', factor)
-        tahdr.set('TSCAL1', factor)
-        tbhdr.set('TSCAL1', factor)
-
-        listhdu[4].header.set('extname', 'INCIDENCE')
-        listhdu[4].header.set('BSCALE', factor)
-        listhdu[5].header.set('extname', 'EMERGENCE')
-        listhdu[5].header.set('BSCALE', factor)
-        listhdu[6].header.set('extname', 'PHASE')
-        listhdu[6].header.set('BSCALE', factor)
-
+        if (mytype == np.float32 or mytype == np.float64):
+          bsq[bsq == blank] = np.nan
+        else:
+          hdr['BLANK'] = blank
+        hdr['DATAMIN'] = datamin
+        hdr['BUNIT'] = bunit
         hdr['TELESCOP'] = telescop
         hdr['AUTHOR'] = author
         hdr['OBJECT'] = target
         hdr['INSTRUME'] = instrume
+        hdr += head
+
+        thdr = listhdu[1].header
+        tahdr = listhdu[2].header
+        tbhdr = listhdu[3].header
+        tbwhdr = listhdu[4].header
+        thdr.set('extname', 'WCS-TAB')
+        tahdr.set('extname', 'WCS-CTAB')
+        tbhdr.set('extname', 'WCS-WTAB')
+        tbwhdr.set('extname', 'WAVELENGTH')
+        thdr.set('TSCAL1', factor)
+        tahdr.set('TSCAL1', factor)
+        tbhdr.set('TSCAL1', factor)
+
+        listhdu[5].header.set('extname', 'INCIDENCE')
+        listhdu[5].header.set('BSCALE', factor)
+        listhdu[6].header.set('extname', 'EMERGENCE')
+        listhdu[6].header.set('BSCALE', factor)
+        listhdu[7].header.set('extname', 'PHASE')
+        listhdu[7].header.set('BSCALE', factor)
+        listhdu[8].header.set('extname', 'TOPOGRAPHY')
+        listhdu[8].header.set('BSCALE', factor)
+        listhdu[9].header.set('extname', 'SLANT ANGLE')
+        listhdu[9].header.set('BSCALE', factor)
+        listhdu[10].header.set('extname', 'LOCAL TIME')
+        listhdu[10].header.set('BSCALE', factor)
+        listhdu[11].header.set('extname', 'CLOUD INCIDENCE')
+        listhdu[11].header.set('BSCALE', factor)
+        listhdu[12].header.set('extname', 'CLOUD EMERGENCE')
+        listhdu[12].header.set('BSCALE', factor)
+        listhdu[13].header.set('extname', 'CLOUD PHASE')
+        listhdu[13].header.set('BSCALE', factor)
+        listhdu[14].header.set('extname', 'CLOUD TOPOGRAPHY')
+        listhdu[14].header.set('BSCALE', factor)
 
         listhdu.writeto(myfits)
 
