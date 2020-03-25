@@ -187,8 +187,6 @@ for arg in sys.argv:
                             lines = header.split('\r\n')
                             for line in lines:
                                 lablines = lablines + 1
-                                if (line == "END\r\n" or line == "END\n"):
-                                    break
                                 temp = line.split('=')
                                 if (temp[0].strip(' ') == "RECORD_BYTES"):
                                     rbytes = int(temp[1].strip(' '))
